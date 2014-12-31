@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,18 +18,18 @@ public class DatabaseHelper {
     private static final String DB_IP = "mmarkiew.no-ip.biz";
     private static final int DB_PORT = 8888;
     
-    private static final String FIND_NODE_LAT_LNG_SQL = "SELECT lat, lon from NODES where id = ?";
+    private static final String FIND_SOURCE_LAT_LNG_SQL = "SELECT y1, x1 from WAYS where source = ?";
     
     private static final String FIND_NEAREST_SOURCE_SQL = "SELECT source from WAYS order by st_distance(st_makepoint(?,?), st_makepoint(y1,x1)) limit 1;";
     
-    private static final String FIND_ROUTE_STATEMENT = "SELECT seq, id1 AS node, id2 AS edge FROM pgr_astar('"+
+    private static final String FIND_ROUTE_STATEMENT = "SELECT seq, id1 AS source_id, y1 as lat, x1 as lng FROM pgr_astar('"+
                 "SELECT gid AS id,"+
                          "source::integer,"+
                          "target::integer,"+
                          "length::double precision AS cost,"+
-                         "x1, y1, x2, y2"+
+                         "x1, y1, x2, y2 "+
                         "FROM ways',"+
-                "?, ?, false, false);";
+                "?, ?, false, false) res join ways w on res.id1 = w.source;";
     
     /**
      * Returns connection to database
@@ -71,21 +70,21 @@ public class DatabaseHelper {
     }
     
     /**
-     * Returns location of node with given id.
+     * Returns location of source with given id.
      * 
-     * @param nodeId
+     * @param sourceId
      * @return
      * @throws SQLException
      */
-    public GeoPoint getNodeGeoPoint(Long nodeId) throws SQLException {
+    public GeoPoint getSourceGeoPoint(Integer sourceId) throws SQLException {
         Connection connection = getConnection();
-        PreparedStatement prepareStatement = connection.prepareStatement(FIND_NODE_LAT_LNG_SQL);
-        prepareStatement.setLong(1, nodeId);
+        PreparedStatement prepareStatement = connection.prepareStatement(FIND_SOURCE_LAT_LNG_SQL);
+        prepareStatement.setLong(1, sourceId);
         
         ResultSet resultSet = prepareStatement.executeQuery();
         GeoPoint result = null;
         if (resultSet.next()) {
-            result = new GeoPoint(resultSet.getDouble("lat"), resultSet.getDouble("lon"));
+            result = new GeoPoint(resultSet.getDouble("y1"), resultSet.getDouble("x1"));
         }
         connection.close();
         
@@ -112,8 +111,8 @@ public class DatabaseHelper {
         
         List<GeoPoint> route = Lists.newArrayList();
         while (resultSet.next()) {
-            long nodeId = resultSet.getLong("node");
-            route.add(getNodeGeoPoint(nodeId));
+            GeoPoint geoPoint = new GeoPoint(resultSet.getDouble("lat"), resultSet.getDouble("lng"));
+            route.add(geoPoint);
         }
         connection.close();
 
@@ -123,39 +122,21 @@ public class DatabaseHelper {
     public static void main(String[] args) {
         DatabaseHelper helper = new DatabaseHelper();
         
-        Connection connection;
+        FindRouteServlet findRouteServlet = new FindRouteServlet();
+        GeoPoint politechnika = findRouteServlet.getGeoPoint("Politechnika,Warszawa");
+        GeoPoint dom = findRouteServlet.getGeoPoint("Polnego wiatru 24,Warszawa");
+        System.out.println("Dom:\t" + dom.toString());
+        System.out.println("Politechnika:\t" + politechnika.toString());
+        
         try {
-            connection = helper.getConnection();
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT seq, id1 AS node, id2 AS edge FROM pgr_astar('"+
-                    "SELECT gid AS id,"+
-                             "source::integer,"+
-                             "target::integer,"+
-                             "length::double precision AS cost,"+
-                             "x1, y1, x2, y2"+
-                            "FROM ways',"+
-                    "20, 30, false, false);");
+            System.out.println("Dom:\t" + helper.getNearestSourceId(dom));
+            System.out.println("Politechnika:\t" + helper.getNearestSourceId(politechnika));
+            
+            System.out.println(Arrays.toString(helper.findRoute(dom, politechnika).toArray()));
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
-        
-//        FindRouteServlet findRouteServlet = new FindRouteServlet();
-//        GeoPoint politechnika = findRouteServlet.getGeoPoint("Politechnika,Warszawa");
-//        GeoPoint dom = findRouteServlet.getGeoPoint("Polnego wiatru 24,Warszawa");
-//        System.out.println("Dom:\t" + dom.toString());
-//        System.out.println("Politechnika:\t" + politechnika.toString());
-//        
-//        try {
-//            System.out.println("Dom:\t" + helper.getNearestSourceId(dom));
-//            System.out.println("Politechnika:\t" + helper.getNearestSourceId(politechnika));
-//            
-//            System.out.println(Arrays.toString(helper.findRoute(dom, politechnika).toArray()));
-//        } catch (SQLException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
     }
     
 }

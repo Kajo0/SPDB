@@ -3,6 +3,7 @@ package pl.edu.pw.elka.spdb;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.List;
@@ -69,14 +70,20 @@ public class FindRouteServlet extends HttpServlet {
         Timestamp arrivalTime = arrivalTimeParam != null ? new Timestamp(
                 Long.valueOf(arrivalTimeParam)) : null;
 
-        return new Gson().toJson(null);
+        return new Gson().toJson(getRoute(origin, destination));
     }
     
     public List<GeoPoint> getRoute(String origin, String destination) {
         // TODO api google pobieranie lat lng origin i dst
-//        GeoPoint originGeo = getGeoPoint(origin);
-//        GeoPoint destGeo = getGeoPoint(destination);
-//        
+        GeoPoint originGeo = getGeoPoint(origin);
+        GeoPoint destGeo = getGeoPoint(destination);
+        
+        try {
+            return databaseHelper.findRoute(originGeo, destGeo);
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return null;
     }
     

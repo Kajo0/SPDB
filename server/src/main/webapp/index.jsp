@@ -13,58 +13,64 @@ html, body, #map-canvas {
 </script>
 <script src="//code.jquery.com/jquery-1.11.2.min.js" /></script>
 <script type="text/javascript">
+
+var map;
 	function initialize() {
 		var mapOptions = {
 			center : {
-				lat : -34.397,
-				lng : 150.644
+				lat : 52.232938,
+				lng : 21.0611941
 			},
-			zoom : 8
+			zoom : 12
 		};
-		var map = new google.maps.Map(document.getElementById('map-canvas'),
+		map = new google.maps.Map(document.getElementById('map-canvas'),
 				mapOptions);
 	}
 	google.maps.event.addDomListener(window, 'load', initialize);
 
+	function getPath(response, color) {
+		var coordinates = [];
+		for (var i = 0; i < response.length; i++) {
+			var point = response[i];
+			var coord = new google.maps.LatLng(point.lat, point.lng);
+			coordinates.push(coord);
+		}
+
+		var path = new google.maps.Polyline({
+			path : coordinates,
+			geodesic : true,
+			strokeColor : color,
+			strokeOpacity : 1.0,
+			strokeWeight : 2
+		});
+
+		return path;
+	}
+
 	function findRoute() {
 		var orig = $('input[name=origin]').val();
 		var dest = $('input[name=destination]').val();
-		$
-				.get("find-transport", {
-					origin : orig,
-					destination : dest
-				},
-						function(response) {
-							var firstPoint = response[0];
+		$.get("find-transport", {
+			origin : orig,
+			destination : dest
+		},
+				function(response) {
+					var firstPoint = response[0];
 
-							var mapOptions = {
-								zoom : 18,
-								center : new google.maps.LatLng(firstPoint.lat,
-										firstPoint.lng),
-								mapTypeId : google.maps.MapTypeId.TERRAIN
-							};
+					var path = getPath(response, '#FF0000');
+					path.setMap(map);
+				});
 
-							var map = new google.maps.Map(document
-									.getElementById('map-canvas'), mapOptions);
+		$.get("find-route", {
+			origin : orig,
+			destination : dest
+		},
+				function(response) {
+					var firstPoint = response[0];
 
-							var coordinates = [];
-							for (var i = 0; i < response.length; i++) {
-								var point = response[i];
-								var coord = new google.maps.LatLng(point.lat,
-										point.lng);
-								coordinates.push(coord);
-							}
-
-							var path = new google.maps.Polyline({
-								path : coordinates,
-								geodesic : true,
-								strokeColor : '#FF0000',
-								strokeOpacity : 1.0,
-								strokeWeight : 2
-							});
-
-							path.setMap(map);
-						});
+					var path = getPath(response, '#00FF00');
+					path.setMap(map);
+				});
 
 	}
 </script>
