@@ -1,16 +1,11 @@
 package pl.edu.pw.elka.spdb;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.sql.Timestamp;
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -18,10 +13,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 
 /**
  * Servlet which serves routes.
@@ -44,19 +38,19 @@ public class FindRouteServlet extends HttpServlet {
      * Arrival time parameter.
      */
     private static final String ARRIVAL_TIME_PARAM = "arrival_time";
-
+    
     /**
-	 * 
-	 */
-    private static final String GOOGLE_TRANSIT_URL = "https://maps.googleapis.com/maps/api/directions/json";
+     * Google api url.
+     */
+    private static final String GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
+    
+    
+    // database helper object
+    private final DatabaseHelper databaseHelper = new DatabaseHelper();
 
     @Override
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        String origin = request.getParameter(ORIGIN_PARAM);
-        String destination = request.getParameter(DESTINATION_PARAM);
-
-        response.getWriter().print("o=" + origin + " d=" + destination + "\n");
 
         String result = process(request);
         response.setContentType("application/json");
@@ -75,76 +69,35 @@ public class FindRouteServlet extends HttpServlet {
         Timestamp arrivalTime = arrivalTimeParam != null ? new Timestamp(
                 Long.valueOf(arrivalTimeParam)) : null;
 
-        return getTransitRoute(origin, destination, arrivalTime);
+        return new Gson().toJson(null);
     }
-
-    /**
-     * Returns json string with route from origin to destination using public
-     * transport. If arrivalTime is null then departureTime is set to actual
-     * time.
-     * 
-     * @param origin
-     * @param destination
-     * @param arrivalTime
-     * @return
-     */
-    private String getTransitRoute(String origin, String destination,
-            Timestamp arrivalTime) {
+    
+    public List<GeoPoint> getRoute(String origin, String destination) {
+        // TODO api google pobieranie lat lng origin i dst
+//        GeoPoint originGeo = getGeoPoint(origin);
+//        GeoPoint destGeo = getGeoPoint(destination);
+//        
+        return null;
+    }
+    
+    public GeoPoint getGeoPoint(String address) {
         try {
-            Map<String, String> params = Maps.newHashMap();
-            params.put("origin", origin);
-            params.put("destination", destination);
-            if (arrivalTime == null) {
-                Calendar calendar = Calendar.getInstance(TimeZone
-                        .getTimeZone("Europe/Warsaw"));
-                // departure_time is in seconds
-                params.put("departure_time",
-                        String.valueOf(calendar.getTimeInMillis() / 1000));
-            } else {
-                params.put("arrival_time",
-                        String.valueOf(arrivalTime.getTime() / 1000));
-            }
-            params.put("mode", "transit");
-            params.put("region", "pl");
-            params.put("language", "pl");
-            URL url = new URL(createUrl(GOOGLE_TRANSIT_URL, params));
-
+            URL url = Utils.createUrl(GEOCODE_URL, Collections.singletonMap("address", address));
             URLConnection connection = url.openConnection();
             connection.setReadTimeout(5000);
             connection.setConnectTimeout(5000);
             String response = IOUtils.toString(connection.getInputStream());
-
-            return response;
+            JSONObject jsonObject = new JSONObject(response);
+            JSONObject result = jsonObject.getJSONArray("results").getJSONObject(0);
+            JSONObject geometry = result.getJSONObject("geometry");
+            JSONObject location = geometry.getJSONObject("location");
+            return new GeoPoint(location.getDouble("lat"), location.getDouble("lng"));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return "error";
-    }
-
-    /**
-     * Creates url with parameters.
-     * 
-     * @param baseUrl
-     * @param params
-     * @return
-     */
-    private String createUrl(String baseUrl, Map<String, String> params) {
-        if (params.isEmpty()) {
-            return baseUrl;
-        }
-        List<String> keyVal = Lists.newArrayList();
-        for (Entry<String, String> entry : params.entrySet()) {
-            try {
-                keyVal.add(entry.getKey() + "="
-                        + URLEncoder.encode(entry.getValue(), "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        return baseUrl + "?" + StringUtils.join(keyVal, "&");
+        
+        return null;
     }
 
 }

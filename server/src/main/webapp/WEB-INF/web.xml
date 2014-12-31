@@ -9,8 +9,16 @@
 		<servlet-name>FindRouteServlet</servlet-name>
 		<servlet-class>pl.edu.pw.elka.spdb.FindRouteServlet</servlet-class>
 	</servlet>
+	<servlet>
+        <servlet-name>FindPublicTransportRouteServlet</servlet-name>
+        <servlet-class>pl.edu.pw.elka.spdb.FindPublicTransportRouteServlet</servlet-class>
+    </servlet>
 	<servlet-mapping>
 		<servlet-name>FindRouteServlet</servlet-name>
 		<url-pattern>/find-route/*</url-pattern>
 	</servlet-mapping>
+	<servlet-mapping>
+        <servlet-name>FindPublicTransportRouteServlet</servlet-name>
+        <url-pattern>/find-transport/*</url-pattern>
+    </servlet-mapping>
 </web-app>
