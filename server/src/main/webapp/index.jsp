@@ -15,6 +15,8 @@ html, body, #map-canvas {
 <script type="text/javascript">
 
 var map;
+var carPath;
+var transitPath;
 	function initialize() {
 		var mapOptions = {
 			center : {
@@ -50,6 +52,14 @@ var map;
 	function findRoute() {
 		var orig = $('input[name=origin]').val();
 		var dest = $('input[name=destination]').val();
+		
+		if (carPath != null) {
+			carPath.setMap(null);
+		}
+		if (transitPath != null) {
+			transitPath.setMap(null);
+		}
+		
 		$.get("find-transport", {
 			origin : orig,
 			destination : dest
@@ -57,8 +67,8 @@ var map;
 				function(response) {
 					var firstPoint = response[0];
 
-					var path = getPath(response, '#FF0000');
-					path.setMap(map);
+					carPath = getPath(response, '#FF0000');
+					carPath.setMap(map);
 				});
 
 		$.get("find-route", {
@@ -68,8 +78,8 @@ var map;
 				function(response) {
 					var firstPoint = response[0];
 
-					var path = getPath(response, '#00FF00');
-					path.setMap(map);
+					transitPath = getPath(response, '#00FF00');
+					transitPath.setMap(map);
 				});
 
 	}
