@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Spdb</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="find_route">Find route</string>
+    <string name="find_transit">Find transit</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="main_address_from_hint">From</string>
+    <string name="main_address_target_hint">Target</string>
+
+</resources>
