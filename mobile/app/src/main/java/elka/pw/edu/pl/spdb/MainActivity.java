@@ -103,7 +103,9 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
-                    showMap(resp);
+                    if (StringUtils.isNoneEmpty(resp)) {
+                        showMap(resp);
+                    }
                 }
             });
         }
@@ -146,7 +148,9 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
-                    showMap(resp);
+                    if (StringUtils.isNoneEmpty(resp)) {
+                        showMap(resp);
+                    }
                 }
             });
         }

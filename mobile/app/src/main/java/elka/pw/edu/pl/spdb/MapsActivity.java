@@ -1,5 +1,6 @@
 package elka.pw.edu.pl.spdb;
 
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -14,6 +15,13 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -23,18 +31,27 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
 
     private GoogleMap map;
     private GoogleApiClient googleApiClient;
+    private List<GeoPoint> route = Lists.newArrayList();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
+
+        route.clear();
+        List<GeoPoint> res = new Gson().fromJson(getIntent().getStringExtra(EXTRA_PARAM), new TypeToken<List<GeoPoint>>() {
+        }.getType());
+        if (res != null) {
+            route.addAll(res);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        drawRoute();
     }
 
     private void setUpMapIfNeeded() {
@@ -51,6 +68,16 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
 
     private void setUpMap() {
 //        map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+    }
+
+    private void drawRoute() {
+        PolylineOptions lineOptions = new PolylineOptions()
+                .width(5)
+                .color(Color.RED);
+        for (GeoPoint point : route) {
+            lineOptions.add(new LatLng(point.getLat(), point.getLng()));
+        }
+        map.addPolyline(lineOptions);
     }
 
     protected synchronized void buildGoogleApiClient() {
