@@ -5,8 +5,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Collections;
-import java.util.List;
+import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -14,7 +15,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTime;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import pl.edu.pw.elka.spdb.RouteResponse.Status;
 
 import com.google.gson.Gson;
 
@@ -62,49 +67,79 @@ public class FindRouteServlet extends HttpServlet {
         String origin = request.getParameter(ORIGIN_PARAM);
         String destination = request.getParameter(DESTINATION_PARAM);
 
+        RouteResponse routeResponse = new RouteResponse();
+        
         if (origin == null && destination == null) {
-            return "error";
+            routeResponse.setStatus(Status.ERROR);
+            routeResponse.setDescription("Invalid parameters.");
+            return new Gson().toJson(routeResponse);
         }
 
         String arrivalTimeParam = request.getParameter(ARRIVAL_TIME_PARAM);
         Timestamp arrivalTime = arrivalTimeParam != null ? new Timestamp(
                 Long.valueOf(arrivalTimeParam)) : null;
 
-        return new Gson().toJson(getRoute(origin, destination));
+        try {
+            Route route = getRoute(origin, destination);
+            routeResponse.setStatus(Status.OK);
+            routeResponse.setRoute(route);
+            if (arrivalTime != null) {
+                routeResponse.setArrivalTime(arrivalTime);
+                
+                Timestamp departureTime = new Timestamp(arrivalTime.getTime() - (long)(route.getTime()*3600*1000));
+                routeResponse.setDepartureTime(departureTime);
+            } else {
+                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Warsaw"));
+                Timestamp departureTime = new Timestamp(calendar.getTimeInMillis());
+                routeResponse.setDepartureTime(departureTime);
+                
+                arrivalTime = new Timestamp(departureTime.getTime() + (long)(route.getTime()*3600*1000));
+                routeResponse.setArrivalTime(arrivalTime);
+            }
+        } catch (SQLException e) {
+            routeResponse.setStatus(Status.ERROR);
+            routeResponse.setDescription("SQLException");
+        } catch (IOException | JSONException e) {
+            routeResponse.setStatus(Status.ERROR);
+            routeResponse.setDescription("Error while getting lat,lng given location.");
+        }
+        return new Gson().toJson(routeResponse);
     }
     
-    public List<GeoPoint> getRoute(String origin, String destination) {
-        // TODO api google pobieranie lat lng origin i dst
+    /**
+     * Returns route from origin to destination.
+     * 
+     * @param origin
+     * @param destination
+     * @return
+     * @throws SQLException
+     * @throws IOException
+     */
+    public Route getRoute(String origin, String destination) throws SQLException, IOException {
         GeoPoint originGeo = getGeoPoint(origin);
         GeoPoint destGeo = getGeoPoint(destination);
         
-        try {
-            return databaseHelper.findRoute(originGeo, destGeo);
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return null;
+        return databaseHelper.findRoute(originGeo, destGeo);
     }
     
-    public GeoPoint getGeoPoint(String address) {
-        try {
-            URL url = Utils.createUrl(GEOCODE_URL, Collections.singletonMap("address", address));
-            URLConnection connection = url.openConnection();
-            connection.setReadTimeout(5000);
-            connection.setConnectTimeout(5000);
-            String response = IOUtils.toString(connection.getInputStream());
-            JSONObject jsonObject = new JSONObject(response);
-            JSONObject result = jsonObject.getJSONArray("results").getJSONObject(0);
-            JSONObject geometry = result.getJSONObject("geometry");
-            JSONObject location = geometry.getJSONObject("location");
-            return new GeoPoint(location.getDouble("lat"), location.getDouble("lng"));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        return null;
+    /**
+     * Returns given addres location (lat,lng), using google geocoding api.
+     * 
+     * @param address
+     * @return
+     * @throws IOException 
+     */
+    public GeoPoint getGeoPoint(String address) throws IOException {
+        URL url = Utils.createUrl(GEOCODE_URL, Collections.singletonMap("address", address));
+        URLConnection connection = url.openConnection();
+        connection.setReadTimeout(5000);
+        connection.setConnectTimeout(5000);
+        String response = IOUtils.toString(connection.getInputStream());
+        JSONObject jsonObject = new JSONObject(response);
+        JSONObject result = jsonObject.getJSONArray("results").getJSONObject(0);
+        JSONObject geometry = result.getJSONObject("geometry");
+        JSONObject location = geometry.getJSONObject("location");
+        return new GeoPoint(location.getDouble("lat"), location.getDouble("lng"));
     }
 
 }
