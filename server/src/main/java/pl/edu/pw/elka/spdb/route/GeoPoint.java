@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.spdb;
+package pl.edu.pw.elka.spdb.route;
 
 public class GeoPoint {
 

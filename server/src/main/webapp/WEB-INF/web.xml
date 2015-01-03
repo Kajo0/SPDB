@@ -3,22 +3,22 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-	<display-name>Archetype Created Web Application</display-name>
+	<display-name>SPDB Application</display-name>
 
 	<servlet>
-		<servlet-name>FindRouteServlet</servlet-name>
-		<servlet-class>pl.edu.pw.elka.spdb.FindRouteServlet</servlet-class>
+		<servlet-name>DrivingRouteServlet</servlet-name>
+		<servlet-class>pl.edu.pw.elka.spdb.servlet.DrivingRouteServlet</servlet-class>
 	</servlet>
 	<servlet>
-        <servlet-name>FindPublicTransportRouteServlet</servlet-name>
-        <servlet-class>pl.edu.pw.elka.spdb.FindPublicTransportRouteServlet</servlet-class>
+        <servlet-name>TransitRouteServlet</servlet-name>
+        <servlet-class>pl.edu.pw.elka.spdb.servlet.TransitRouteServlet</servlet-class>
     </servlet>
 	<servlet-mapping>
-		<servlet-name>FindRouteServlet</servlet-name>
-		<url-pattern>/find-route/*</url-pattern>
+		<servlet-name>DrivingRouteServlet</servlet-name>
+		<url-pattern>/driving/*</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
-        <servlet-name>FindPublicTransportRouteServlet</servlet-name>
-        <url-pattern>/find-transport/*</url-pattern>
+        <servlet-name>TransitRouteServlet</servlet-name>
+        <url-pattern>/transit/*</url-pattern>
     </servlet-mapping>
 </web-app>

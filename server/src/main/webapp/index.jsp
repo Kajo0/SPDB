@@ -14,7 +14,7 @@ html, body, #map-canvas {
 <script src="//code.jquery.com/jquery-1.11.2.min.js" /></script>
 <script type="text/javascript">
 	var map;
-	var carPath;
+	var drivingPath;
 	var transitPath;
 	function initialize() {
 		var mapOptions = {
@@ -48,45 +48,54 @@ html, body, #map-canvas {
 		return path;
 	}
 
+	function handleRouteResponse(response, resultDiv, color) {
+		console.log(response);
+		if (response.status == "ERROR") {
+			resultDiv.text("Error: " + response.description);
+			return null;
+		} else {
+			var path = getPath(response.route.polyline, color);
+			path.setMap(map);
+
+			resultDiv.html("Czas trwania podrozy: "
+					+ response.route.time.toFixed(2) + "h<br>"
+					+ "Dlugosc drogi: " + response.route.length.toFixed(2)
+					+ "km<br>" + "Start: " + response.departureTime + "<br>"
+					+ "Koniec: " + response.arrivalTime);
+			return path;
+		}
+	}
+
 	function findRoute() {
 		var orig = $('input[name=origin]').val();
 		var dest = $('input[name=destination]').val();
 
-		if (carPath != null) {
-			carPath.setMap(null);
+		if (drivingPath != null) {
+			drivingPath.setMap(null);
 		}
 		if (transitPath != null) {
 			transitPath.setMap(null);
 		}
 
-		$.get("find-transport", {
+		$.get("transit", {
 			origin : orig,
 			destination : dest
 		}, function(response) {
-			console.log(response);
-			var firstPoint = response[0];
-
-			carPath = getPath(response, '#FF0000');
-			carPath.setMap(map);
+			var path = handleRouteResponse(response, $('#transit-result'),
+					'#FF0000');
+			if (path != null) {
+				transitPath = path;
+			}
 		});
 
-		$.get("find-route", {
+		$.get("driving", {
 			origin : orig,
 			destination : dest
 		}, function(response) {
-			console.log(response);
-			if (response.status == "ERROR") {
-				alert("Error: " + response.description);
-			} else {
-				var firstPoint = response.route[0];
-
-				transitPath = getPath(response.route.polyline, '#00FF00');
-				transitPath.setMap(map);
-
-				$('#result').text(
-						"Czas trwania podrozy: " + response.route.time
-								+ "h dlugosc drogi: " + response.route.length
-								+ "km");
+			var path = handleRouteResponse(response, $('#driving-result'),
+					'#0000FF');
+			if (path != null) {
+				drivingPath = path;
 			}
 		});
 
@@ -100,7 +109,22 @@ html, body, #map-canvas {
 			type="text" name="destination" value="Politechnika, Warszawa" /> <input
 			type="submit" value="OK" />
 	</form>
-	<div id="result"></div>
+	<table>
+		<tr>
+			<td>Transit</td>
+			<td>Route</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="transit-result"></div>
+			</td>
+			<td>
+				<div id="driving-result"></div>
+			</td>
+		</tr>
+	</table>
+
+
 	<div id="map-canvas"></div>
 </body>
 </html>

@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.spdb;
+package pl.edu.pw.elka.spdb.servlet;
 
 import java.io.IOException;
 import java.net.URL;
@@ -15,22 +15,26 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import pl.edu.pw.elka.spdb.RouteResponse.Status;
+import pl.edu.pw.elka.spdb.common.DatabaseHelper;
+import pl.edu.pw.elka.spdb.common.Utils;
+import pl.edu.pw.elka.spdb.route.GeoPoint;
+import pl.edu.pw.elka.spdb.route.Route;
+import pl.edu.pw.elka.spdb.route.RouteResponse;
+import pl.edu.pw.elka.spdb.route.RouteResponse.Status;
 
 import com.google.gson.Gson;
 
 /**
- * Servlet which serves routes.
+ * Servlet which serves driving routes.
  * 
  * @author Jan Zarzycki
  *
  */
 @SuppressWarnings("serial")
-public class FindRouteServlet extends HttpServlet {
+public class DrivingRouteServlet extends HttpServlet {
 
     /**
      * Origin parameter.

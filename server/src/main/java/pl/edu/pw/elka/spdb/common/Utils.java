@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.spdb;
+package pl.edu.pw.elka.spdb.common;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+
+import pl.edu.pw.elka.spdb.route.GeoPoint;
 
 import com.google.common.collect.Lists;
 

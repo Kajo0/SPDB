@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.spdb;
+package pl.edu.pw.elka.spdb.common;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -8,6 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+
+import pl.edu.pw.elka.spdb.route.GeoPoint;
+import pl.edu.pw.elka.spdb.route.Route;
+import pl.edu.pw.elka.spdb.servlet.DrivingRouteServlet;
 
 import com.google.common.collect.Lists;
 
@@ -130,7 +134,7 @@ public class DatabaseHelper {
     public static void main(String[] args) {
         DatabaseHelper helper = new DatabaseHelper();
         
-        FindRouteServlet findRouteServlet = new FindRouteServlet();
+        DrivingRouteServlet findRouteServlet = new DrivingRouteServlet();
         
         try {
             GeoPoint politechnika = findRouteServlet.getGeoPoint("Politechnika,Warszawa");
