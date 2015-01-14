@@ -19,18 +19,14 @@
         android:id="@+id/main_address_target"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/main_address_target_hint" />
+        android:hint="@string/main_address_target_hint"
+        android:layout_marginTop = "10dp" />
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="findRoute"
-        android:text="@string/find_route" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="findTransit"
-        android:text="@string/find_transit" />
+        android:text="@string/find_route"
+        android:layout_marginTop = "10dp" />
 
 </LinearLayout>
