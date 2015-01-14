@@ -89,20 +89,10 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(final String resp) {
-            String msg = null;
-
-            if (resp == null) {
-                msg = ctx.getString(R.string.error_unknown);
-            } else {
-                msg = resp;
-            }
-
-            final String message = msg;
             runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
                     if (StringUtils.isNoneEmpty(resp)) {
                         showMap(resp);
                     }
@@ -134,20 +124,10 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(final String resp) {
-            String msg = null;
-
-            if (resp == null) {
-                msg = ctx.getString(R.string.error_unknown);
-            } else {
-                msg = resp;
-            }
-
-            final String message = msg;
             runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
                     if (StringUtils.isNoneEmpty(resp)) {
                         showMap(resp);
                     }

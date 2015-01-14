@@ -9,8 +9,8 @@ public class Util {
     private static final String PARAM_ARRIVAL_TIME = "arrival_time";
 
     private static final String SERVER_MAIN_ADDRESS = "http://mmarkiew.no-ip.info/spdb";
-    private static final String SERVLET_ROUTE = SERVER_MAIN_ADDRESS + "/find-route/";
-    private static final String SERVLET_TRANSTI = SERVER_MAIN_ADDRESS + "/find-transport/";
+    private static final String SERVLET_ROUTE = SERVER_MAIN_ADDRESS + "/driving/";
+    private static final String SERVLET_TRANSTI = SERVER_MAIN_ADDRESS + "/transit/";
 
     public static String requestRoute(String from, String to) {
         Map<String, Object> map = CustomHttpClient.createParameterMap();

@@ -40,10 +40,9 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         setUpMapIfNeeded();
 
         route.clear();
-        List<GeoPoint> res = new Gson().fromJson(getIntent().getStringExtra(EXTRA_PARAM), new TypeToken<List<GeoPoint>>() {
-        }.getType());
-        if (res != null) {
-            route.addAll(res);
+        ServerResponse serverResponse = new Gson().fromJson(getIntent().getStringExtra(EXTRA_PARAM), ServerResponse.class);
+        if (serverResponse != null) {
+            route.addAll(serverResponse.getRoute().getPolyline());
         }
     }
 
