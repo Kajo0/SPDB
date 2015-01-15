@@ -12,5 +12,7 @@
     <string name="main_address_target_hint">Target</string>
     <string name="drive">Drive</string>
     <string name="transit">Transit</string>
+    <string name="minutes">minutes</string>
+    <string name="km">km</string>
 
 </resources>

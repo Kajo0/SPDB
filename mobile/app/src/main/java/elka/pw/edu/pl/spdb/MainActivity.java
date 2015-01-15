@@ -36,9 +36,7 @@ public class MainActivity extends ActionBarActivity {
 
     protected void onStop () {
         super.onStop();
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-        }
+        dismissProgressDialog();
     }
 
     private String getSourceAddressEditText() {
@@ -51,6 +49,12 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean checkEmptyFields() {
         return !StringUtils.isAnyEmpty(getSourceAddressEditText(), getTargetAddressEditText());
+    }
+
+    private void dismissProgressDialog() {
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+        }
     }
 
     public void findRoute(View view) {
@@ -103,6 +107,7 @@ public class MainActivity extends ActionBarActivity {
                         showMap(resp);
                     }
                     else {
+                        dismissProgressDialog();
                         Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
                     }
                 }

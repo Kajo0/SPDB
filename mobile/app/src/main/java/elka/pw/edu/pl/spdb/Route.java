@@ -7,11 +7,11 @@ import java.util.List;
  */
 public class Route {
     private final List<GeoPoint> polyline;
-    private final double lenght;
+    private final double length;
     private final double time;
 
-    public Route(double lenght, List<GeoPoint> polyline, double time) {
-        this.lenght = lenght;
+    public Route(double length, List<GeoPoint> polyline, double time) {
+        this.length = length;
         this.polyline = polyline;
         this.time = time;
     }
@@ -20,8 +20,8 @@ public class Route {
         return polyline;
     }
 
-    public double getLenght() {
-        return lenght;
+    public double getLength() {
+        return length;
     }
 
     public double getTime() {

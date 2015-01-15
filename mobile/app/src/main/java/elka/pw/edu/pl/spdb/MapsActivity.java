@@ -5,12 +5,12 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.internal.ge;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -19,11 +19,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.util.List;
 
@@ -46,6 +43,10 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
     private String toAddress;
     private LatLngBounds driveBounds;
     private LatLngBounds transitBounds;
+    private TextView timeTextView;
+    private TextView distanceTextView;
+    private TextView departureTextView;
+    private TextView arrivalTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +54,10 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         setContentView(R.layout.activity_maps);
         driveButton = (ToggleButton) findViewById(R.id.driveButton);
         transitButton = (ToggleButton) findViewById(R.id.transitButton);
+        timeTextView = (TextView) findViewById(R.id.timeText);
+        distanceTextView = (TextView) findViewById(R.id.distanceText);
+        departureTextView = (TextView) findViewById(R.id.departureText);
+        arrivalTextView = (TextView) findViewById(R.id.arrivalText);
 
         setUpMapIfNeeded();
 
@@ -89,7 +94,7 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
                 @Override
                 public void onMapLoaded() {
                     map.moveCamera(CameraUpdateFactory.newLatLngBounds(driveBounds, 50));
-                    drawRoute(driveResponse, true);
+                    drawRoute(true);
                 }
             });
             if (map != null) {
@@ -102,21 +107,24 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
     /**
      * Refreshes map and draws route
      *
-     * @param response response from server
      * @param type true - driveResponse, false - transitResponse
      */
-    private void drawRoute(ServerResponse response, boolean type) {
+    private void drawRoute(boolean type) {
         map.clear();
         int color;
+        ServerResponse response;
         if (type) {
+            response = driveResponse;
             color = Color.BLUE;
         }
         else {
-            color = Color.CYAN;
+            response = transitResponse;
+            color = Color.MAGENTA;
         }
         PolylineOptions lineOptions = new PolylineOptions()
                 .width(5)
                 .color(color);
+
         List<GeoPoint> polyline = response.getRoute().getPolyline();
         for (GeoPoint point : polyline) {
             lineOptions.add(new LatLng(point.getLat(), point.getLng()));
@@ -141,6 +149,11 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         }
         map.animateCamera(cameraUpdate);
 
+        int timeMinutes = (int)(response.getRoute().getTime() * 60);
+        timeTextView.setText(String.valueOf(timeMinutes) + " " + getString(R.string.minutes));
+        distanceTextView.setText(String.format("%.2f", response.getRoute().getLength()) + " " + getString(R.string.km));
+        arrivalTextView.setText(response.getArrivalTime());
+        departureTextView.setText(response.getDepartureTime());
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -160,10 +173,6 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         // To avoid timing with google play service
         if (location == null)
             return;
-
-        /*LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, INIT_ZOOM);
-        map.animateCamera(cameraUpdate);*/
     }
 
     @Override
@@ -191,11 +200,11 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         switch (view.getId()) {
             case R.id.driveButton:
                 transitButton.setChecked(false);
-                drawRoute(driveResponse, true);
+                drawRoute(true);
                 break;
             case R.id.transitButton:
                 driveButton.setChecked(false);
-                drawRoute(transitResponse, false);
+                drawRoute(false);
                 break;
         }
     }
