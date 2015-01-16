@@ -12,19 +12,24 @@ public class Util {
     private static final String SERVLET_ROUTE = SERVER_MAIN_ADDRESS + "/driving/";
     private static final String SERVLET_TRANSTI = SERVER_MAIN_ADDRESS + "/transit/";
 
-    public static String requestRoute(String from, String to) {
+    public static String requestRoute(String from, String to, Long arrivalTime) {
         Map<String, Object> map = CustomHttpClient.createParameterMap();
         map.put(PARAM_ORIGIN, from);
         map.put(PARAM_DESTINATION, to);
+        if (arrivalTime != null) {
+            map.put(PARAM_ARRIVAL_TIME, arrivalTime);
+        }
 
         return CustomHttpClient.doGetRequest(SERVLET_ROUTE, map);
     }
 
-    public static String requestTransit(String from, String to, Long startTime) {
+    public static String requestTransit(String from, String to, Long arrivalTime) {
         Map<String, Object> map = CustomHttpClient.createParameterMap();
         map.put(PARAM_ORIGIN, from);
         map.put(PARAM_DESTINATION, to);
-        map.put(PARAM_ARRIVAL_TIME, startTime);
+        if (arrivalTime != null) {
+            map.put(PARAM_ARRIVAL_TIME, arrivalTime);
+        }
 
         return CustomHttpClient.doGetRequest(SERVLET_TRANSTI, map);
     }

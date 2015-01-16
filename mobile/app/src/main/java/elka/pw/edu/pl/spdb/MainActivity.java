@@ -6,9 +6,9 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.view.View;
-import android.widget.EditText;
 import android.util.Pair;
+import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 
 import org.apache.commons.lang3.StringUtils;
@@ -16,8 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public class MainActivity extends ActionBarActivity {
 
-    private EditText sourceAddressEditText;
-    private EditText targetAddressEditText;
+    private AutoCompleteTextView sourceAddressEditText;
+    private AutoCompleteTextView targetAddressEditText;
 
     private FindRouteTask findRouteTask = null;
     private ProgressDialog progressDialog;
@@ -27,11 +27,15 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sourceAddressEditText = (EditText) findViewById(R.id.main_address_source);
-        targetAddressEditText = (EditText) findViewById(R.id.main_address_target);
+        sourceAddressEditText = (AutoCompleteTextView) findViewById(R.id.main_address_source);
+        targetAddressEditText = (AutoCompleteTextView) findViewById(R.id.main_address_target);
 
-        sourceAddressEditText.setText("Cyprysowa 9, Warszawa");
-        targetAddressEditText.setText("Politechnika, Warszawa");
+        PlacesAutoCompleteAdapter adapter = new PlacesAutoCompleteAdapter(this, R.layout.list_item, 3);
+        sourceAddressEditText.setAdapter(adapter);
+        targetAddressEditText.setAdapter(adapter);
+
+        /*sourceAddressEditText.setText("Cyprysowa 9, Warszawa");
+        targetAddressEditText.setText("Politechnika, Warszawa");*/
     }
 
     protected void onStop () {
@@ -92,8 +96,8 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected Pair<String, String> doInBackground(final String... params) {
-            return new Pair<String, String>(Util.requestRoute(params[0], params[1]),
-                    Util.requestTransit(params[0], params[1], System.currentTimeMillis()));
+            return new Pair<String, String>(Util.requestRoute(params[0], params[1], null),
+                    Util.requestTransit(params[0], params[1], null));
         }
 
         @Override

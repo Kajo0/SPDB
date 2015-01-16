@@ -9,16 +9,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/main_address_source"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:singleLine="true"
         android:hint="@string/main_address_from_hint" />
 
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/main_address_target"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:singleLine="true"
         android:hint="@string/main_address_target_hint"
         android:layout_marginTop = "10dp" />
 
