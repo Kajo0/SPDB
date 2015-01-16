@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import pl.edu.pw.elka.spdb.route.GeoPoint;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class Utils {
     
@@ -79,5 +81,14 @@ public class Utils {
         }
 
         return new URL(baseUrl + "?" + StringUtils.join(keyVal, "&"));
+    }
+    
+    /**
+     * Returns gson object which has enabled pretty printing.
+     * 
+     * @return
+     */
+    public static Gson getGson() {
+        return new GsonBuilder().setPrettyPrinting().create();
     }
 }

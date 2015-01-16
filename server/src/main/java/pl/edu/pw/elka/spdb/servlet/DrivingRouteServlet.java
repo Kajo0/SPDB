@@ -5,14 +5,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.TimeZone;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
@@ -25,8 +18,6 @@ import pl.edu.pw.elka.spdb.route.Route;
 import pl.edu.pw.elka.spdb.route.RouteResponse;
 import pl.edu.pw.elka.spdb.route.RouteResponse.Status;
 
-import com.google.gson.Gson;
-
 /**
  * Servlet which serves driving routes.
  * 
@@ -34,21 +25,8 @@ import com.google.gson.Gson;
  *
  */
 @SuppressWarnings("serial")
-public class DrivingRouteServlet extends HttpServlet {
+public class DrivingRouteServlet extends AbstractRouteServlet {
 
-    /**
-     * Origin parameter.
-     */
-    private static final String ORIGIN_PARAM = "origin";
-    /**
-     * Destination parameter.
-     */
-    private static final String DESTINATION_PARAM = "destination";
-    /**
-     * Arrival time parameter.
-     */
-    private static final String ARRIVAL_TIME_PARAM = "arrival_time";
-    
     /**
      * Google api url.
      */
@@ -58,58 +36,6 @@ public class DrivingRouteServlet extends HttpServlet {
     // database helper object
     private final DatabaseHelper databaseHelper = new DatabaseHelper();
 
-    @Override
-    protected void doGet(HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, IOException {
-
-        String result = process(request);
-        response.setContentType("application/json");
-        response.getWriter().print(result);
-    }
-
-    private String process(HttpServletRequest request) {
-        String origin = request.getParameter(ORIGIN_PARAM);
-        String destination = request.getParameter(DESTINATION_PARAM);
-
-        RouteResponse routeResponse = new RouteResponse();
-        
-        if (origin == null && destination == null) {
-            routeResponse.setStatus(Status.ERROR);
-            routeResponse.setDescription("Invalid parameters.");
-            return new Gson().toJson(routeResponse);
-        }
-
-        String arrivalTimeParam = request.getParameter(ARRIVAL_TIME_PARAM);
-        Timestamp arrivalTime = arrivalTimeParam != null ? new Timestamp(
-                Long.valueOf(arrivalTimeParam)) : null;
-
-        try {
-            Route route = getRoute(origin, destination);
-            routeResponse.setStatus(Status.OK);
-            routeResponse.setRoute(route);
-            if (arrivalTime != null) {
-                routeResponse.setArrivalTime(arrivalTime);
-                
-                Timestamp departureTime = new Timestamp(arrivalTime.getTime() - (long)(route.getTime()*3600*1000));
-                routeResponse.setDepartureTime(departureTime);
-            } else {
-                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Warsaw"));
-                Timestamp departureTime = new Timestamp(calendar.getTimeInMillis());
-                routeResponse.setDepartureTime(departureTime);
-                
-                arrivalTime = new Timestamp(departureTime.getTime() + (long)(route.getTime()*3600*1000));
-                routeResponse.setArrivalTime(arrivalTime);
-            }
-        } catch (SQLException e) {
-            routeResponse.setStatus(Status.ERROR);
-            routeResponse.setDescription("SQLException");
-        } catch (IOException | JSONException e) {
-            routeResponse.setStatus(Status.ERROR);
-            routeResponse.setDescription("Error while getting lat,lng given location.");
-        }
-        return new Gson().toJson(routeResponse);
-    }
-    
     /**
      * Returns route from origin to destination.
      * 
@@ -144,6 +70,36 @@ public class DrivingRouteServlet extends HttpServlet {
         JSONObject geometry = result.getJSONObject("geometry");
         JSONObject location = geometry.getJSONObject("location");
         return new GeoPoint(location.getDouble("lat"), location.getDouble("lng"));
+    }
+
+    @Override
+    public RouteResponse getRouteResponse(String origin, String destination,
+            Timestamp departureTime, Timestamp arrivalTime) {
+        RouteResponse routeResponse = new RouteResponse();
+        try {
+            Route route = getRoute(origin, destination);
+            routeResponse.setStatus(Status.OK);
+            routeResponse.setRoute(route);
+            if (arrivalTime != null) {
+                routeResponse.setArrivalTime(arrivalTime);
+                Timestamp departureTs = new Timestamp(arrivalTime.getTime() - (long)(route.getTime()*3600*1000));
+                routeResponse.setDepartureTime(departureTs);
+            } else {
+                routeResponse.setDepartureTime(departureTime);
+                Timestamp arrivalTs = new Timestamp(departureTime.getTime() + (long)(route.getTime()*3600*1000));
+                routeResponse.setArrivalTime(arrivalTs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            routeResponse.setStatus(Status.ERROR);
+            routeResponse.setDescription("SQLException");
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+            routeResponse.setStatus(Status.ERROR);
+            routeResponse.setDescription("Error while getting lat,lng given location.");
+        }
+        
+        return routeResponse;
     }
 
 }

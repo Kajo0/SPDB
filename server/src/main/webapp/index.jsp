@@ -79,10 +79,12 @@ html, body, #map-canvas {
 
 		$.get("transit", {
 			origin : orig,
-			destination : dest
+			destination : dest,
+            departure_time : new Date().getTime()
 		}, function(response) {
 			var path = handleRouteResponse(response, $('#transit-result'),
 					'#FF0000');
+			$('#transit-result').append(response.description);
 			if (path != null) {
 				transitPath = path;
 			}
@@ -90,7 +92,8 @@ html, body, #map-canvas {
 
 		$.get("driving", {
 			origin : orig,
-			destination : dest
+			destination : dest,
+			departure_time : new Date().getTime()
 		}, function(response) {
 			var path = handleRouteResponse(response, $('#driving-result'),
 					'#0000FF');
