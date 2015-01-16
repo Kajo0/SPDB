@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +31,12 @@ public class TransitRouteServlet extends AbstractRouteServlet {
 	 * Google transit API URL
 	 */
     private static final String GOOGLE_TRANSIT_URL = "https://maps.googleapis.com/maps/api/directions/json";
-
+    /**
+     * Logger
+     */
+    private static final Logger LOG = Logger.getLogger(TransitRouteServlet.class);
+    
+    
     /**
      * Returns json string with route from origin to destination using public
      * transport. 
@@ -61,6 +67,7 @@ public class TransitRouteServlet extends AbstractRouteServlet {
         params.put("region", "pl");
         params.put("language", "pl");
         URL url = Utils.createUrl(GOOGLE_TRANSIT_URL, params);
+        LOG.debug("Google transit request url: " + url.toString());
 
         URLConnection connection = url.openConnection();
         connection.setReadTimeout(5000);
@@ -130,7 +137,7 @@ public class TransitRouteServlet extends AbstractRouteServlet {
             String routeJson = getGoogleTransitRouteJson(origin, destination, departureTime, arrivalTime);
             transitResponse = getTransitResponse(routeJson);
         } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            LOG.error(e);
             transitResponse = new RouteResponse();
             transitResponse.setStatus(Status.ERROR);
             transitResponse.setDescription("Find transit error");

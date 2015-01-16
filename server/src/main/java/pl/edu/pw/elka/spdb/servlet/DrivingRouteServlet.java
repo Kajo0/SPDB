@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.Collections;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,7 +32,10 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
      * Google api url.
      */
     private static final String GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
-    
+    /**
+     * Logger
+     */
+    private static final Logger LOG = Logger.getLogger(DrivingRouteServlet.class);
     
     // database helper object
     private final DatabaseHelper databaseHelper = new DatabaseHelper();
@@ -61,6 +65,7 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
      */
     public GeoPoint getGeoPoint(String address) throws IOException {
         URL url = Utils.createUrl(GEOCODE_URL, Collections.singletonMap("address", address));
+        LOG.debug("Google geocode request url: " + url.toString());
         URLConnection connection = url.openConnection();
         connection.setReadTimeout(5000);
         connection.setConnectTimeout(5000);
@@ -69,7 +74,11 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
         JSONObject result = jsonObject.getJSONArray("results").getJSONObject(0);
         JSONObject geometry = result.getJSONObject("geometry");
         JSONObject location = geometry.getJSONObject("location");
-        return new GeoPoint(location.getDouble("lat"), location.getDouble("lng"));
+        
+        double lat = location.getDouble("lat");
+        double lng = location.getDouble("lng");
+        LOG.debug("Geocode response lat " + lat +" lng " + lng);
+        return new GeoPoint(lat, lng);
     }
 
     @Override
@@ -90,11 +99,11 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
                 routeResponse.setArrivalTime(arrivalTs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error(e);
             routeResponse.setStatus(Status.ERROR);
             routeResponse.setDescription("SQLException");
         } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            LOG.error(e);
             routeResponse.setStatus(Status.ERROR);
             routeResponse.setDescription("Error while getting lat,lng given location.");
         }

@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import pl.edu.pw.elka.spdb.route.GeoPoint;
 import pl.edu.pw.elka.spdb.route.Route;
 import pl.edu.pw.elka.spdb.servlet.DrivingRouteServlet;
@@ -21,6 +23,10 @@ import com.google.common.collect.Lists;
  * @author Jan Zarzycki
  */
 public class DatabaseHelper {
+    /**
+     * Logger
+     */
+    private static final Logger LOG = Logger.getLogger(DatabaseHelper.class);
     
     /**
      * Database parameters
@@ -85,10 +91,13 @@ public class DatabaseHelper {
             PreparedStatement prepareStatement = connection.prepareStatement(FIND_NEAREST_SOURCE_SQL);
             prepareStatement.setDouble(1, point.getLat());
             prepareStatement.setDouble(2, point.getLng());
+            LOG.debug(prepareStatement.toString());
             
             try (ResultSet resultSet = prepareStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    return resultSet.getInt("source");
+                    int result = resultSet.getInt("source");
+                    LOG.debug("Query result: " + result);
+                    return result;
                 }
                 return null;
             }
@@ -111,6 +120,7 @@ public class DatabaseHelper {
             PreparedStatement prepareStatement = connection.prepareStatement(FIND_ROUTE_SQL);
             prepareStatement.setInt(1, originSourceId);
             prepareStatement.setInt(2, destinationSourceId);
+            LOG.debug(prepareStatement.toString());
             double length = 0.0;
             double time = 0.0;
             List<GeoPoint> polyline = Lists.newArrayList();
@@ -118,6 +128,7 @@ public class DatabaseHelper {
                 while (resultSet.next()) {
                     GeoPoint geoPoint = new GeoPoint(resultSet.getDouble("lat"), resultSet.getDouble("lng"));
                     polyline.add(geoPoint);
+                    
                     length += resultSet.getDouble("length");
                     time += resultSet.getDouble("time");
                 }
@@ -126,37 +137,9 @@ public class DatabaseHelper {
             route.setPolyline(polyline);
             route.setLength(length);
             route.setTime(time);
+            LOG.debug("Route size: " + polyline.size() + ", length "+ length +"km, time "+time+"h");
             
             return route;
-        }
-    }
-    
-    public static void main(String[] args) {
-        DatabaseHelper helper = new DatabaseHelper();
-        
-        DrivingRouteServlet findRouteServlet = new DrivingRouteServlet();
-        
-        try {
-            GeoPoint politechnika = findRouteServlet.getGeoPoint("Politechnika,Warszawa");
-            GeoPoint dom = findRouteServlet.getGeoPoint("Polnego wiatru 24,Warszawa");
-            System.out.println("Dom:\t" + dom.toString());
-            System.out.println("Politechnika:\t" + politechnika.toString());
-            
-            
-            System.out.println("Dom:\t" + helper.getNearestSourceId(dom));
-            System.out.println("Politechnika:\t" + helper.getNearestSourceId(politechnika));
-            
-            Route route = helper.findRoute(dom, politechnika);
-            System.out.println(Arrays.toString(route.getPolyline().toArray()));
-            
-            System.out.println("Distance= "+route.getLength()+"km");
-            System.out.println("Time= " + route.getTime());
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
     }
     
