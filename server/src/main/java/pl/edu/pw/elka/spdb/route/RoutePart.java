@@ -2,20 +2,35 @@ package pl.edu.pw.elka.spdb.route;
 
 import java.util.List;
 
-public class Route {
-    private List<RoutePart> parts;
+/**
+ * Object with route data.
+ * 
+ * @author Jan Zarzycki
+ *
+ */
+public class RoutePart {
+    /**
+     * Polyline with route points.
+     */
+    private List<GeoPoint> polyline;
+    /**
+     * Route length in km.
+     */
     private Double length;
+    /**
+     * Travel time in hours.
+     */
     private Double time;
+    /**
+     * Route description.
+     */
     private String description;
     
-    public Route() {
-        super();
+    public List<GeoPoint> getPolyline() {
+        return polyline;
     }
-    public List<RoutePart> getParts() {
-        return parts;
-    }
-    public void setParts(List<RoutePart> parts) {
-        this.parts = parts;
+    public void setPolyline(List<GeoPoint> polyline) {
+        this.polyline = polyline;
     }
     public Double getLength() {
         return length;

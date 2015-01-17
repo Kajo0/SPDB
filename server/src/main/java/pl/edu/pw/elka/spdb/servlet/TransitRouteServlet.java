@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -14,9 +15,11 @@ import org.json.JSONObject;
 
 import pl.edu.pw.elka.spdb.common.Utils;
 import pl.edu.pw.elka.spdb.route.Route;
+import pl.edu.pw.elka.spdb.route.RoutePart;
 import pl.edu.pw.elka.spdb.route.RouteResponse;
 import pl.edu.pw.elka.spdb.route.RouteResponse.Status;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -73,6 +76,7 @@ public class TransitRouteServlet extends AbstractRouteServlet {
         connection.setReadTimeout(5000);
         connection.setConnectTimeout(5000);
         String response = IOUtils.toString(connection.getInputStream());
+        LOG.debug("Google transit response: " + response);
 
         return response;
     }
@@ -88,15 +92,13 @@ public class TransitRouteServlet extends AbstractRouteServlet {
         JSONObject firstRoute = jsonObject.getJSONArray("routes").getJSONObject(0);
         
         JSONObject firstLeg = firstRoute.getJSONArray("legs").getJSONObject(0);
-        JSONObject overviewPolyline = firstRoute.getJSONObject("overview_polyline");
         
         RouteResponse routeResponse = new RouteResponse();
         Route route = new Route();
-        route.setPolyline(Utils.decodePoly(overviewPolyline.getString("points")));
         route.setLength(firstLeg.getJSONObject("distance").getInt("value")/1000.0);
         route.setTime(firstLeg.getJSONObject("duration").getInt("value")/3600.0);
+        route.setParts(getTransitRoute(firstLeg.getJSONArray("steps")));
         routeResponse.setRoute(route);
-        routeResponse.setDescription(getTransitDescription(firstLeg.getJSONArray("steps")));
         routeResponse.setArrivalTime(new Timestamp(firstLeg.getJSONObject("arrival_time").getLong("value")*1000));
         routeResponse.setDepartureTime(new Timestamp(firstLeg.getJSONObject("departure_time").getLong("value")*1000));
         routeResponse.setStatus(Status.OK);
@@ -104,29 +106,35 @@ public class TransitRouteServlet extends AbstractRouteServlet {
         return routeResponse;
     }
     
-    private String getTransitDescription(JSONArray steps) {
-        StringBuilder builder = new StringBuilder();
+    private List<RoutePart> getTransitRoute(JSONArray steps) {
+        List<RoutePart> route = Lists.newArrayList();
         for(int i=0; i< steps.length(); i++) {
             JSONObject step = steps.getJSONObject(i);
-            builder.append(step.getString("html_instructions"));
+            RoutePart routePart = new RoutePart();
+            
+            routePart.setLength(step.getJSONObject("distance").getInt("value")/1000.0);
+            routePart.setTime(step.getJSONObject("duration").getInt("value")/3600.0);
+            routePart.setPolyline(Utils.decodePoly(step.getJSONObject("polyline").getString("points")));
             if (step.has("transit_details")) {
                 JSONObject transitDetails = step.getJSONObject("transit_details");
                 String arrivalStopName = transitDetails.getJSONObject("arrival_stop").getString("name");
-                String arrivalTime = transitDetails.getJSONObject("arrival_time").getString("text");
                 String departureStopName = transitDetails.getJSONObject("departure_stop").getString("name");
                 String departureTime = transitDetails.getJSONObject("departure_time").getString("text");
                 String line = transitDetails.getJSONObject("line").getString("short_name");
                 
-                builder.append(String.format(": linia %s z przystanku %s o godzinie %s do przystanku %s o godzinie %s",
+                
+                routePart.setDescription(String.format("%s: %s z %s o godzinie %s do %s",
+                        step.getString("html_instructions"),
                         line,
                         departureStopName, departureTime,
-                        arrivalStopName, arrivalTime));
+                        arrivalStopName));
+            } else {
+                routePart.setDescription(step.getString("html_instructions"));
             }
-            
-            builder.append('\n');
+            route.add(routePart);
         }
         
-        return builder.toString();
+        return route;
     }
 
     @Override

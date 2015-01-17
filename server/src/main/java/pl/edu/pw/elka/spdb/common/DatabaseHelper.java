@@ -1,19 +1,16 @@
 package pl.edu.pw.elka.spdb.common;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import pl.edu.pw.elka.spdb.route.GeoPoint;
-import pl.edu.pw.elka.spdb.route.Route;
-import pl.edu.pw.elka.spdb.servlet.DrivingRouteServlet;
+import pl.edu.pw.elka.spdb.route.RoutePart;
 
 import com.google.common.collect.Lists;
 
@@ -50,6 +47,12 @@ public class DatabaseHelper {
      * arg2 - lng
      */
     private static final String FIND_NEAREST_SOURCE_SQL = "SELECT source from WAYS where class_id not in (" + FORBIDDEN_WAYS_CLASS_IDS +") order by st_distance(st_makepoint(?,?), st_makepoint(y1,x1)) limit 1;";
+    /**
+     * SQL query which finds target which is the nearest neighbor of given (lat,lng)
+     * arg1 - lat
+     * arg2 - lng
+     */
+    private static final String FIND_NEAREST_TARGET_SQL = "SELECT target from WAYS where class_id not in (" + FORBIDDEN_WAYS_CLASS_IDS +") order by st_distance(st_makepoint(?,?), st_makepoint(y1,x1)) limit 1;";
     /**
      * SQL query which finds route between two points.
      * arg1 - origin source
@@ -104,6 +107,32 @@ public class DatabaseHelper {
         }
     }
     
+    
+    /**
+     * Returns node id which is nearest to given point.
+     * 
+     * @param point
+     * @return
+     * @throws SQLException
+     */
+    public Integer getNearestTargetId(GeoPoint point) throws SQLException {
+        try (Connection connection = getConnection()){
+            PreparedStatement prepareStatement = connection.prepareStatement(FIND_NEAREST_TARGET_SQL);
+            prepareStatement.setDouble(1, point.getLat());
+            prepareStatement.setDouble(2, point.getLng());
+            LOG.debug(prepareStatement.toString());
+            
+            try (ResultSet resultSet = prepareStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int result = resultSet.getInt("target");
+                    LOG.debug("Query result: " + result);
+                    return result;
+                }
+                return null;
+            }
+        }
+    }
+    
     /**
      * Finds route between origin and destination.
      * 
@@ -112,9 +141,9 @@ public class DatabaseHelper {
      * @return
      * @throws SQLException
      */
-    public Route findRoute(GeoPoint origin, GeoPoint destination) throws SQLException {
+    public RoutePart findRoute(GeoPoint origin, GeoPoint destination) throws SQLException {
         Integer originSourceId = getNearestSourceId(origin);
-        Integer destinationSourceId = getNearestSourceId(destination);
+        Integer destinationSourceId = getNearestTargetId(destination);
         
         try (Connection connection = getConnection()) {
             PreparedStatement prepareStatement = connection.prepareStatement(FIND_ROUTE_SQL);
@@ -133,7 +162,7 @@ public class DatabaseHelper {
                     time += resultSet.getDouble("time");
                 }
             }
-            Route route = new Route();
+            RoutePart route = new RoutePart();
             route.setPolyline(polyline);
             route.setLength(length);
             route.setTime(time);

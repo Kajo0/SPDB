@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import pl.edu.pw.elka.spdb.common.Utils;
 import pl.edu.pw.elka.spdb.route.RouteResponse;
 import pl.edu.pw.elka.spdb.route.RouteResponse.Status;
@@ -37,15 +39,22 @@ public abstract class AbstractRouteServlet extends HttpServlet {
      * Departure time parameter.
      */
     private static final String DEPARTURE_TIME_PARAM = "departure_time";
+    /**
+     * Logger
+     */
+    private static final Logger LOG = Logger.getLogger(DrivingRouteServlet.class);
+    
     
     @Override
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
 
+        LOG.debug("Request: " + request.getRequestURI() + "?" + request.getQueryString());
         String result = process(request);
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
         response.getWriter().print(result);
+        LOG.debug("Response: " + result);
     }
 
     private String process(HttpServletRequest request) {

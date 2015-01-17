@@ -14,8 +14,7 @@ html, body, #map-canvas {
 <script src="//code.jquery.com/jquery-1.11.2.min.js" /></script>
 <script type="text/javascript">
 	var map;
-	var drivingPath;
-	var transitPath;
+	var paths=[];
 	function initialize() {
 		var mapOptions = {
 			center : {
@@ -29,6 +28,15 @@ html, body, #map-canvas {
 	}
 	google.maps.event.addDomListener(window, 'load', initialize);
 
+	function getRandomColor() {
+	    var letters = '0123456789ABCDEF'.split('');
+	    var color = '#';
+	    for (var i = 0; i < 6; i++ ) {
+	        color += letters[Math.floor(Math.random() * 16)];
+	    }
+	    return color;
+	}
+	
 	function getPath(polyline, color) {
 		var coordinates = [];
 		for (var i = 0; i < polyline.length; i++) {
@@ -48,14 +56,19 @@ html, body, #map-canvas {
 		return path;
 	}
 
-	function handleRouteResponse(response, resultDiv, color) {
+	function handleRouteResponse(response, resultDiv) {
 		console.log(response);
 		if (response.status == "ERROR") {
 			resultDiv.text("Error: " + response.description);
 			return null;
 		} else {
-			var path = getPath(response.route.polyline, color);
-			path.setMap(map);
+			for(var i in response.route.parts) {
+				var color = getRandomColor();
+				var path = getPath(response.route.parts[i].polyline, color);
+	            path.setMap(map);
+	            paths.push(path);
+			}
+			
 
 			resultDiv.html("Czas trwania podrozy: "
 					+ response.route.time.toFixed(2) + "h<br>"
@@ -70,24 +83,18 @@ html, body, #map-canvas {
 		var orig = $('input[name=origin]').val();
 		var dest = $('input[name=destination]').val();
 
-		if (drivingPath != null) {
-			drivingPath.setMap(null);
+		for (var i in paths) {
+			paths[i].setMap(null);
 		}
-		if (transitPath != null) {
-			transitPath.setMap(null);
-		}
+		paths = [];
 
 		$.get("transit", {
 			origin : orig,
 			destination : dest,
             departure_time : new Date().getTime()
 		}, function(response) {
-			var path = handleRouteResponse(response, $('#transit-result'),
-					'#FF0000');
+			var path = handleRouteResponse(response, $('#transit-result'));
 			$('#transit-result').append(response.description);
-			if (path != null) {
-				transitPath = path;
-			}
 		});
 
 		$.get("driving", {
@@ -95,11 +102,7 @@ html, body, #map-canvas {
 			destination : dest,
 			departure_time : new Date().getTime()
 		}, function(response) {
-			var path = handleRouteResponse(response, $('#driving-result'),
-					'#0000FF');
-			if (path != null) {
-				drivingPath = path;
-			}
+			var path = handleRouteResponse(response, $('#driving-result'));
 		});
 
 	}

@@ -5,6 +5,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.io.IOUtils;
@@ -16,6 +17,7 @@ import pl.edu.pw.elka.spdb.common.DatabaseHelper;
 import pl.edu.pw.elka.spdb.common.Utils;
 import pl.edu.pw.elka.spdb.route.GeoPoint;
 import pl.edu.pw.elka.spdb.route.Route;
+import pl.edu.pw.elka.spdb.route.RoutePart;
 import pl.edu.pw.elka.spdb.route.RouteResponse;
 import pl.edu.pw.elka.spdb.route.RouteResponse.Status;
 
@@ -49,7 +51,7 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
      * @throws SQLException
      * @throws IOException
      */
-    public Route getRoute(String origin, String destination) throws SQLException, IOException {
+    public RoutePart getRoute(String origin, String destination) throws SQLException, IOException {
         GeoPoint originGeo = getGeoPoint(origin);
         GeoPoint destGeo = getGeoPoint(destination);
         
@@ -65,11 +67,12 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
      */
     public GeoPoint getGeoPoint(String address) throws IOException {
         URL url = Utils.createUrl(GEOCODE_URL, Collections.singletonMap("address", address));
-        LOG.debug("Google geocode request url: " + url.toString());
+        LOG.debug("Geocode request url: " + url.toString());
         URLConnection connection = url.openConnection();
         connection.setReadTimeout(5000);
         connection.setConnectTimeout(5000);
         String response = IOUtils.toString(connection.getInputStream());
+        LOG.debug("Geocode response: " + response);
         JSONObject jsonObject = new JSONObject(response);
         JSONObject result = jsonObject.getJSONArray("results").getJSONObject(0);
         JSONObject geometry = result.getJSONObject("geometry");
@@ -77,7 +80,6 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
         
         double lat = location.getDouble("lat");
         double lng = location.getDouble("lng");
-        LOG.debug("Geocode response lat " + lat +" lng " + lng);
         return new GeoPoint(lat, lng);
     }
 
@@ -86,8 +88,13 @@ public class DrivingRouteServlet extends AbstractRouteServlet {
             Timestamp departureTime, Timestamp arrivalTime) {
         RouteResponse routeResponse = new RouteResponse();
         try {
-            Route route = getRoute(origin, destination);
+            RoutePart routePart = getRoute(origin, destination);
             routeResponse.setStatus(Status.OK);
+            Route route = new Route();
+            route.setParts(Arrays.asList(routePart));
+            route.setLength(routePart.getLength());
+            route.setTime(routePart.getTime());
+            route.setDescription("Jazda samochodem.");
             routeResponse.setRoute(route);
             if (arrivalTime != null) {
                 routeResponse.setArrivalTime(arrivalTime);
