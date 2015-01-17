@@ -56,7 +56,7 @@ public class MainActivity extends ActionBarActivity {
         dateEditView = (EditText) findViewById(R.id.dateTimeText);
         arrivalTimeCheckBox = (CheckBox) findViewById(R.id.arrivalTimeCheckbox);
 
-        PlacesAutoCompleteAdapter adapter = new PlacesAutoCompleteAdapter(this, R.layout.list_item, 3);
+        PlacesAutoCompleteAdapter adapter = new PlacesAutoCompleteAdapter(this, android.R.layout.simple_list_item_1, 3);
         sourceAddressEditText.setAdapter(adapter);
         targetAddressEditText.setAdapter(adapter);
 
