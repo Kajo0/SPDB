@@ -18,5 +18,6 @@
     <string name="date_time_title">Select date/time</string>
     <string name="error_server">Server couldn\'t find desired route</string>
     <string name="error_parse_server">Server returned malformed data</string>
+    <string name="transfer">Transfer</string>
 
 </resources>

@@ -16,9 +16,12 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 
@@ -66,15 +69,21 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         driveResponse = new Gson().fromJson(getIntent().getStringExtra(DRIVE_PARAM), ServerResponse.class);
         transitResponse = new Gson().fromJson(getIntent().getStringExtra(TRANSIT_PARAM), ServerResponse.class);
 
-        GeoBoundaries boundaries = new GeoBoundaries(driveResponse.getRoute().getPolyline().get(0));
-        for (GeoPoint point : driveResponse.getRoute().getPolyline()) {
-            boundaries.update(point);
+        List<Section> sections = driveResponse.getRoute().getParts();
+        GeoBoundaries boundaries = new GeoBoundaries(sections.get(0).getPolyline().get(0));
+        for (Section section : sections) {
+            for (GeoPoint point : section.getPolyline()) {
+                boundaries.update(point);
+            }
         }
         driveBounds = boundaries.getLatLngBounds();
 
-        boundaries = new GeoBoundaries(transitResponse.getRoute().getPolyline().get(0));
-        for (GeoPoint point : transitResponse.getRoute().getPolyline()) {
-            boundaries.update(point);
+        sections = transitResponse.getRoute().getParts();
+        boundaries = new GeoBoundaries(sections.get(0).getPolyline().get(0));
+        for (Section section : sections) {
+            for (GeoPoint point : section.getPolyline()) {
+                boundaries.update(point);
+            }
         }
         transitBounds = boundaries.getLatLngBounds();
 
@@ -107,41 +116,81 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
     /**
      * Refreshes map and draws route
      *
-     * @param type true - driveResponse, false - transitResponse
+     * @param driveResponse true - driveResponse, false - transitResponse
      */
-    private void drawRoute(boolean type) {
+    private void drawRoute(boolean driveResponse) {
         map.clear();
-        int color;
+        int[] colors = new int[] {Color.BLUE, Color.MAGENTA, Color.GREEN, Color.RED};
+        float[] markerColors = new float[] {BitmapDescriptorFactory.HUE_BLUE,
+                BitmapDescriptorFactory.HUE_MAGENTA,
+                BitmapDescriptorFactory.HUE_GREEN,
+                BitmapDescriptorFactory.HUE_RED};
+
         ServerResponse response;
-        if (type) {
-            response = driveResponse;
-            color = Color.BLUE;
+        if (driveResponse) {
+            response = this.driveResponse;
         }
         else {
             response = transitResponse;
-            color = Color.MAGENTA;
         }
-        PolylineOptions lineOptions = new PolylineOptions()
-                .width(5)
-                .color(color);
 
-        List<GeoPoint> polyline = response.getRoute().getPolyline();
-        for (GeoPoint point : polyline) {
-            lineOptions.add(new LatLng(point.getLat(), point.getLng()));
+        if (driveResponse) {
+            PolylineOptions lineOptions = new PolylineOptions()
+                    .width(5)
+                    .color(colors[0]);
+            List<GeoPoint> polyline = response.getRoute().getParts().get(0).getPolyline();
+            for (GeoPoint point : polyline) {
+                lineOptions.add(new LatLng(point.getLat(), point.getLng()));
+            }
+            map.addPolyline(lineOptions);
+            map.addMarker(new MarkerOptions()
+                    .position(new LatLng(polyline.get(0).getLat(),
+                            polyline.get(0).getLng()))
+                    .title(fromAddress)
+                    .icon(BitmapDescriptorFactory.defaultMarker(markerColors[0])));
+            map.addMarker(new MarkerOptions()
+                    .position(new LatLng(polyline.get(polyline.size() - 1).getLat(),
+                            polyline.get(polyline.size() - 1).getLng()))
+                    .title(toAddress)
+                    .icon(BitmapDescriptorFactory.defaultMarker(markerColors[0])));
         }
-        map.addPolyline(lineOptions);
-
-        map.addMarker(new MarkerOptions()
-                .position(new LatLng(polyline.get(0).getLat(),
-                        polyline.get(0).getLng()))
-                .title(fromAddress));
-        map.addMarker(new MarkerOptions()
-                .position(new LatLng(polyline.get(polyline.size() - 1).getLat(),
-                        polyline.get(polyline.size() - 1).getLng()))
-                .title(toAddress));
+        else {
+            int counter = 0;
+            for (Section section : response.getRoute().getParts()) {
+                PolylineOptions lineOptions = new PolylineOptions()
+                        .width(5)
+                        .color(colors[counter]);
+                List<GeoPoint> polyline = section.getPolyline();
+                for (GeoPoint point : polyline) {
+                    lineOptions.add(new LatLng(point.getLat(), point.getLng()));
+                }
+                map.addPolyline(lineOptions);
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(new LatLng(polyline.get(0).getLat(),
+                        polyline.get(0).getLng()));
+                if (counter == 0) {
+                    markerOptions.title(fromAddress);
+                }
+                else {
+                    markerOptions.title(getString(R.string.transfer));
+                }
+                markerOptions.snippet(section.getDescription());
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(markerColors[counter]));
+                map.addMarker(markerOptions);
+                counter = (counter + 1) % colors.length;
+            }
+            //Add last marker
+            List<Section> sections = response.getRoute().getParts();
+            List<GeoPoint> polyline = sections.get(sections.size() - 1).getPolyline();
+            map.addMarker(new MarkerOptions()
+                    .position(new LatLng(polyline.get(polyline.size() - 1).getLat(),
+                            polyline.get(polyline.size() - 1).getLng()))
+                    .title(toAddress)
+                    .icon(BitmapDescriptorFactory.defaultMarker(markerColors[counter])));
+        }
 
         CameraUpdate cameraUpdate;
-        if (type) {
+        if (driveResponse) {
             cameraUpdate = CameraUpdateFactory.newLatLngBounds(driveBounds, 50);
         }
         else {

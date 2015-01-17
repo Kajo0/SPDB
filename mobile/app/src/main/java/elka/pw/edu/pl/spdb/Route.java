@@ -6,18 +6,18 @@ import java.util.List;
  * Created by Maciej on 2015-01-14.
  */
 public class Route {
-    private final List<GeoPoint> polyline;
+    private final List<Section> parts;
     private final double length;
     private final double time;
 
-    public Route(double length, List<GeoPoint> polyline, double time) {
+    public Route(List<Section> parts, double length, double time) {
+        this.parts = parts;
         this.length = length;
-        this.polyline = polyline;
         this.time = time;
     }
 
-    public List<GeoPoint> getPolyline() {
-        return polyline;
+    public List<Section> getParts() {
+        return parts;
     }
 
     public double getLength() {
