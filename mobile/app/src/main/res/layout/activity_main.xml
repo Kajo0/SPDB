@@ -24,6 +24,31 @@
         android:hint="@string/main_address_target_hint"
         android:layout_marginTop = "10dp" />
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop = "10dp">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_weight="1"
+            android:focusableInTouchMode="false"
+            android:onClick="onDateTimeClicked"
+            android:id="@+id/dateTimeText" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/arrival_time"
+            android:id="@+id/arrivalTimeCheckbox"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/editText" />
+
+    </LinearLayout>
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

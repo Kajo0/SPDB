@@ -14,5 +14,7 @@
     <string name="transit">Transit</string>
     <string name="minutes">minutes</string>
     <string name="km">km</string>
+    <string name="arrival_time">Arrival time</string>
+    <string name="date_time_title">Select date/time</string>
 
 </resources>
