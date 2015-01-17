@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +25,8 @@ import android.widget.Toast;
 import com.google.android.gms.internal.ge;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -129,17 +132,36 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(final Pair<String, String> resp) {
-            final String msg = ctx.getString(R.string.error_unknown);
+            String tempMsg = ctx.getString(R.string.error_unknown);
+            boolean tempResponseOk = true;
+            try {
+                JSONObject jsonObj = new JSONObject(resp.first);
+                String statusDrive = jsonObj.getString("status");
+                jsonObj = new JSONObject(resp.second);
+                String statusTransit = jsonObj.getString("status");
+                if (!statusTransit.equals("OK") || !statusDrive.equals("OK")) {
+                    tempResponseOk = false;
+                    tempMsg = ctx.getString(R.string.error_server);
+                }
+            }
+            catch(JSONException e) {
+                tempResponseOk = false;
+                tempMsg = ctx.getString(R.string.error_parse_server);
+            }
+            final String errorMsg = tempMsg;
+            final boolean serverResponseOk = tempResponseOk;
             runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    if (StringUtils.isNoneEmpty(resp.first) && StringUtils.isNoneEmpty(resp.second)) {
+                    if (StringUtils.isNoneEmpty(resp.first) &&
+                        StringUtils.isNoneEmpty(resp.second) &&
+                        serverResponseOk) {
                         showMap(resp);
                     }
                     else {
                         dismissProgressDialog();
-                        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ctx, errorMsg, Toast.LENGTH_SHORT).show();
                     }
                 }
             });
