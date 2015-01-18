@@ -106,6 +106,24 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
                     drawRoute(true);
                 }
             });
+            map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+                @Override
+                public View getInfoWindow(Marker marker) {
+                    return null;
+                }
+
+                @Override
+                public View getInfoContents(Marker marker) {
+                    View v = getLayoutInflater().inflate(android.R.layout.simple_list_item_2, null);
+                    TextView item1 = (TextView) v.findViewById(android.R.id.text1);
+                    TextView item2 = (TextView) v.findViewById(android.R.id.text2);
+                    item1.setText(marker.getTitle());
+                    item2.setText(marker.getSnippet());
+
+                    return v;
+                }
+            });
             if (map != null) {
                 buildGoogleApiClient();
                 googleApiClient.connect();
